@@ -32,6 +32,7 @@ bin/ntfy-publisher       ntfy publisher launcher
 bin/ntfy-publisher.py    ntfy polling/publishing 구현
 bin/configure-ntfy-token ntfy 인증 설정 helper
 mcp/                     MCP publisher
+scripts/                 배포/helper 스크립트
 posts/                   Markdown 원본 기본 경로
 data/                    SQLite DB 기본 경로
 state/                   런타임 상태 기본 경로
@@ -159,7 +160,40 @@ postbridge-ntfy.service
         └── /etc/postbridge/.env
 ```
 
-서비스 이름과 설치 위치는 배포 환경에 맞게 정하면 됩니다. 소스 코드에서 특정 systemd 서비스명을 요구하지 않습니다.
+바로 사용할 수 있는 systemd 샘플은 [`scripts/systemd/`](scripts/systemd/)에 포함되어 있습니다.
+
+```text
+scripts/systemd/postbridge.service
+scripts/systemd/postbridge-mcp.service
+scripts/systemd/postbridge-ntfy.service
+```
+
+샘플은 다음 경로 구성을 기준으로 합니다.
+
+```text
+/opt/postbridge       애플리케이션 소스
+/etc/postbridge/.env  공통 환경설정 파일
+/var/lib/postbridge   DB/posts/state 쓰기 경로
+```
+
+서비스는 전용 `postbridge` 시스템 사용자로 실행하는 것을 가정합니다. 설치 예시는 다음과 같습니다.
+
+```bash
+sudo cp scripts/systemd/postbridge*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now postbridge.service
+```
+
+MCP와 ntfy 설정이 완료되면 선택적으로 활성화합니다.
+
+```bash
+sudo systemctl enable --now postbridge-mcp.service
+sudo systemctl enable --now postbridge-ntfy.service
+```
+
+사용자/디렉터리/권한 준비 방법은 [`scripts/systemd/README.md`](scripts/systemd/README.md)를 참고하세요. MCP 샘플은 Node.js가 `/usr/bin/node`에 설치되어 있다고 가정하므로 다른 경로를 사용하는 경우 `ExecStart`를 수정해야 합니다.
+
+서비스 이름과 설치 위치는 예제이며 실제 배포 환경에 맞게 변경할 수 있습니다.
 
 ## ntfy publisher
 
@@ -222,10 +256,10 @@ MCP_OAUTH_APPROVAL_KEY=
 openssl rand -hex 32
 ```
 
-예를 들어 생성된 값을 통합 `.env`에 다음과 같이 설정합니다.
+`.env`에 붙여 넣을 수 있는 전체 설정 줄을 바로 생성하려면 다음 명령을 사용할 수 있습니다.
 
-```ini
-MCP_OAUTH_APPROVAL_KEY=<openssl에서 생성한 값>
+```bash
+echo "MCP_OAUTH_APPROVAL_KEY=$(openssl rand -hex 32)"
 ```
 
 이 값은 OAuth access token 자체가 아니라 **OAuth 연결을 승인할 때 사용하는 비밀키**이며 Git에 커밋하면 안 됩니다. 실제 access/refresh token은 OAuth 흐름에서 발급됩니다.

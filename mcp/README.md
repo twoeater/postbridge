@@ -124,10 +124,10 @@ Generate a strong approval key with OpenSSL, for example:
 openssl rand -hex 32
 ```
 
-Then place the generated value in the shared environment file:
+To generate a complete configuration line that can be pasted into the shared environment file, run:
 
-```ini
-MCP_OAUTH_APPROVAL_KEY=<generated value>
+```bash
+echo "MCP_OAUTH_APPROVAL_KEY=$(openssl rand -hex 32)"
 ```
 
 This value is the **server-side approval key used on the OAuth authorization page**, not an OAuth access token. Access and refresh tokens are issued by the OAuth flow itself.

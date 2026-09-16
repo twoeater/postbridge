@@ -1,0 +1,35 @@
+[Unit]
+Description=Postbridge ntfy Publisher
+After=network-online.target postbridge.service
+Wants=network-online.target
+Requires=postbridge.service
+
+[Service]
+Type=simple
+User=postbridge
+Group=postbridge
+WorkingDirectory=/opt/postbridge
+EnvironmentFile=/etc/postbridge/.env
+ExecStart=/opt/postbridge/bin/ntfy-publisher
+Restart=always
+RestartSec=3
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+ReadOnlyPaths=/opt/postbridge
+ReadWritePaths=/var/lib/postbridge
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,32 @@
+[Unit]
+Description=Postbridge Web
+After=network.target
+
+[Service]
+Type=simple
+User=postbridge
+Group=postbridge
+WorkingDirectory=/opt/postbridge
+EnvironmentFile=/etc/postbridge/.env
+ExecStart=/opt/postbridge/.venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8765 --access-logfile - --error-logfile - app:app
+Restart=on-failure
+RestartSec=3
+UMask=0027
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+ReadOnlyPaths=/opt/postbridge /var/lib/postbridge
+
+[Install]
+WantedBy=multi-user.target

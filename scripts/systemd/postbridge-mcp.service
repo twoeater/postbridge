@@ -1,0 +1,43 @@
+[Unit]
+Description=Postbridge MCP Publisher
+After=network.target postbridge.service
+Requires=postbridge.service
+
+[Service]
+Type=simple
+User=postbridge
+Group=postbridge
+WorkingDirectory=/opt/postbridge/mcp
+EnvironmentFile=/etc/postbridge/.env
+ExecStart=/usr/bin/node /opt/postbridge/mcp/dist/server.js
+Restart=on-failure
+RestartSec=3
+UMask=0077
+
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAddressDeny=any
+IPAddressAllow=localhost
+ReadOnlyPaths=/opt/postbridge
+ReadWritePaths=/var/lib/postbridge
+
+[Install]
+WantedBy=multi-user.target
