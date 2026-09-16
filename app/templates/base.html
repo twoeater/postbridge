@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="{{ page_lang|default(site_language) }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="{{ meta_description|default(site_meta_description, true) }}">
+  {% if robots_meta %}<meta name="robots" content="{{ robots_meta }}">{% endif %}
+  <meta name="color-scheme" content="dark light">
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
+  <link rel="alternate" type="application/atom+xml" title="{{ site_name }}" href="/feed.xml">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css?v=20260916-2">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header"><div class="shell nav"><a class="brand" href="/"><span class="mark">◆</span> {{ site_name }}</a><nav><a href="/">Posts</a><a href="/feed.xml">Feed</a></nav></div></header>
+  <main class="shell">{% block content %}{% endblock %}</main>
+  <footer class="shell footer"><span>© {{ current_year }} {{ site_name }}</span><span>Markdown · publishing</span></footer>
+</body>
+</html>

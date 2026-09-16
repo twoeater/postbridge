@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# TypeScript build output
+dist/
+
+# Locally bundled Node runtime
+runtime/
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs / temporary files
+*.log
+*.tmp
+*.swp
+*~
+
+# Test / coverage output
+coverage/
+.nyc_output/

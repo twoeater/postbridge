@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} · {{ site_name }}{% endblock %}
+{% block head %}<script type="application/ld+json">{{ structured_data|tojson }}</script>{% endblock %}
+{% block content %}
+<article class="article">
+  <header>
+    <p class="eyebrow">{{ post.published_date }}</p>
+    <div class="post-title-wrap">
+      <h1 class="post-title" data-fit-title style="display:block;width:100%;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:4rem;line-height:1.05;letter-spacing:-.055em">{{ post.title }}</h1>
+    </div>
+    {% if post.summary %}<p class="lead">{{ post.summary }}</p>{% endif %}
+    {% if post.tag_list %}<div class="tags">{% for tag in post.tag_list %}<a href="/tag/{{ tag }}">#{{ tag }}</a>{% endfor %}</div>{% endif %}
+  </header>
+  <div class="markdown">{{ post.body_html|safe }}</div>
+</article>
+<script>
+(() => {
+  const title = document.querySelector('[data-fit-title]');
+  if (!title) return;
+
+  const fitTitle = () => {
+    const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const maxSize = 3.6 * rootSize;
+    const minSize = 1.15 * rootSize;
+
+    title.style.fontSize = `${maxSize}px`;
+
+    if (title.scrollWidth <= title.clientWidth) return;
+
+    let low = minSize;
+    let high = maxSize;
+    for (let i = 0; i < 14; i++) {
+      const mid = (low + high) / 2;
+      title.style.fontSize = `${mid}px`;
+      if (title.scrollWidth <= title.clientWidth) low = mid;
+      else high = mid;
+    }
+    title.style.fontSize = `${low}px`;
+  };
+
+  fitTitle();
+  new ResizeObserver(fitTitle).observe(title.parentElement);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
+})();
+</script>
+{% endblock %}

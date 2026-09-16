@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+PYTHON=${BLOG_PYTHON:-"$ROOT/.venv/bin/python"}
+exec "$PYTHON" "$ROOT/bin/ntfy-publisher.py" "$@"
