@@ -1,6 +1,12 @@
 # Postbridge
 
-**English** | [한국어](README.ko.md)
+---
+
+<p align="center">
+  <strong>English</strong> &nbsp;|&nbsp; <a href="README.ko.md">한국어</a>
+</p>
+
+---
 
 Postbridge is a lightweight blog that stores Markdown documents in SQLite and renders them with Flask.
 

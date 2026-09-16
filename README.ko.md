@@ -1,6 +1,12 @@
 # Postbridge
 
-[English](README.md) | **한국어**
+---
+
+<p align="center">
+  <a href="README.md">English</a> &nbsp;|&nbsp; <strong>한국어</strong>
+</p>
+
+---
 
 Markdown 문서를 SQLite에 저장하고 Flask로 렌더링하는 경량 블로그입니다.
 
