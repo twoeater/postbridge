@@ -167,6 +167,8 @@ NTFY_TOPIC=blog-publish
 NTFY_TOKEN=
 ```
 
+`NTFY_TOKEN`은 ntfy 웹 UI에서 **Account → Access tokens**로 이동한 뒤 새 access token을 생성해서 사용합니다. 생성된 token 값을 통합 `.env`의 `NTFY_TOKEN`에 넣습니다.
+
 동작 방식:
 
 - ntfy `Title` → 게시글 제목
@@ -207,6 +209,20 @@ MCP_SERVER_NAME=postbridge-mcp
 MCP_DISPLAY_NAME="Postbridge Publisher"
 MCP_OAUTH_APPROVAL_KEY=
 ```
+
+`MCP_OAUTH_APPROVAL_KEY`는 MCP OAuth 승인 화면에서 사용하는 서버 측 approval key입니다. 최소 32자 이상이어야 하며, OpenSSL로 충분히 긴 무작위 값을 만들 수 있습니다.
+
+```bash
+openssl rand -hex 32
+```
+
+예를 들어 생성된 값을 통합 `.env`에 다음과 같이 설정합니다.
+
+```ini
+MCP_OAUTH_APPROVAL_KEY=<openssl에서 생성한 값>
+```
+
+이 값은 OAuth access token 자체가 아니라 **OAuth 연결을 승인할 때 사용하는 비밀키**이며 Git에 커밋하면 안 됩니다. 실제 access/refresh token은 OAuth 흐름에서 발급됩니다.
 
 기본 endpoint는 `${MCP_PUBLIC_URL}/mcp`이며 제공 도구는 `publish_blog` 하나입니다.
 

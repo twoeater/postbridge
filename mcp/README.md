@@ -118,6 +118,20 @@ The approval page displays `MCP_DISPLAY_NAME` and `MCP_PUBLIC_URL` rather than a
 
 `MCP_OAUTH_APPROVAL_KEY` must be at least 32 characters and should be kept only in the root/service-readable environment file. Do not commit it to Git.
 
+Generate a strong approval key with OpenSSL, for example:
+
+```bash
+openssl rand -hex 32
+```
+
+Then place the generated value in the shared environment file:
+
+```ini
+MCP_OAUTH_APPROVAL_KEY=<generated value>
+```
+
+This value is the **server-side approval key used on the OAuth authorization page**, not an OAuth access token. Access and refresh tokens are issued by the OAuth flow itself.
+
 The implementation includes:
 
 - authorization code + PKCE (`S256`)
