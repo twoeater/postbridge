@@ -49,7 +49,7 @@ function secureUrl(value: string, name: string): string {
 export function loadConfig(): AppConfig {
   const defaultBlogRoot = fileURLToPath(new URL("../../", import.meta.url));
   const blogRoot = path.resolve(process.env.BLOG_ROOT?.trim() || defaultBlogRoot);
-  const siteName = process.env.BLOG_SITE_NAME?.trim() || "Markdown Notes";
+  const siteName = process.env.BLOG_SITE_NAME?.trim() || "Postbridge";
   const publicUrl = secureUrl(
     process.env.MCP_PUBLIC_URL?.trim() || process.env.BLOG_SITE_URL?.trim() || "https://example.com",
     "MCP_PUBLIC_URL",
@@ -69,7 +69,7 @@ export function loadConfig(): AppConfig {
     endpoint,
     publicUrl,
     siteName,
-    serverName: process.env.MCP_SERVER_NAME?.trim() || "markdown-blog-mcp",
+    serverName: process.env.MCP_SERVER_NAME?.trim() || "postbridge-mcp",
     displayName: process.env.MCP_DISPLAY_NAME?.trim() || `${siteName} Publisher`,
     allowedHosts: (process.env.MCP_ALLOWED_HOSTS || publicHostname)
       .split(",")

@@ -15,7 +15,7 @@ BLOGCTL = Path(os.environ.get('BLOGCTL_PATH', ROOT / 'bin' / 'blogctl'))
 STATE_FILE = Path(os.environ.get('NTFY_STATE_FILE', Path(os.environ.get('BLOG_STATE_DIR', ROOT / 'state')) / 'ntfy-last-id'))
 MAX_ATTACHMENT_BYTES = int(os.environ.get('NTFY_MAX_ATTACHMENT_BYTES', str(5 * 1024 * 1024)))
 POLL_INTERVAL = int(os.environ.get('NTFY_POLL_INTERVAL', '5'))
-USER_AGENT = os.environ.get('NTFY_USER_AGENT', 'markdown-blog-ntfy-publisher/2.0')
+USER_AGENT = os.environ.get('NTFY_USER_AGENT', 'postbridge-ntfy-publisher/2.0')
 
 BASE_URL = os.environ.get('NTFY_BASE_URL', '').rstrip('/')
 TOPIC = os.environ.get('NTFY_TOPIC', '')

@@ -171,7 +171,7 @@ def delete(args) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Root-only Markdown blog publisher")
+    parser = argparse.ArgumentParser(description="Postbridge Markdown publisher")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init")
 

@@ -11,7 +11,7 @@ from flask import Flask, abort, make_response, render_template, request
 from .db import get_db
 
 app = Flask(__name__)
-site_name = os.environ.get("BLOG_SITE_NAME", "Markdown Notes").strip() or "Markdown Notes"
+site_name = os.environ.get("BLOG_SITE_NAME", "Postbridge").strip() or "Postbridge"
 site_url = os.environ.get("BLOG_SITE_URL", "http://127.0.0.1:8765").strip().rstrip("/")
 app.config.update(
     SITE_NAME=site_name,

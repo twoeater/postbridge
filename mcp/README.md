@@ -1,6 +1,6 @@
-# Markdown Blog MCP Publisher
+# Postbridge MCP Publisher
 
-`mcp/` provides an optional remote publisher for the Markdown blog.
+`mcp/` provides an optional remote publisher for Postbridge.
 
 The MCP server is deployment-neutral: the site URL, host validation, display name, executable paths, database path, OAuth state location, and token lifetimes are configured through the shared environment file rather than hardcoded into the source.
 
@@ -9,29 +9,29 @@ The MCP server is deployment-neutral: the site URL, host validation, display nam
 The MCP service can use the same unified environment file as the web and ntfy services:
 
 ```ini
-EnvironmentFile=/etc/markdown-blog/.env
+EnvironmentFile=/etc/postbridge/.env
 ```
 
 Relevant variables:
 
 ```ini
-BLOG_SITE_NAME="Markdown Notes"
+BLOG_SITE_NAME="Postbridge"
 BLOG_SITE_URL=https://blog.example.com
-BLOG_ROOT=/opt/markdown-blog
-BLOG_DB=/var/lib/markdown-blog/blog.db
-BLOG_POSTS_DIR=/var/lib/markdown-blog/posts
+BLOG_ROOT=/opt/postbridge
+BLOG_DB=/var/lib/postbridge/blog.db
+BLOG_POSTS_DIR=/var/lib/postbridge/posts
 BLOG_TIMEZONE=UTC
 
 MCP_PUBLIC_URL=https://blog.example.com
 MCP_ALLOWED_HOSTS=blog.example.com
-MCP_SERVER_NAME=markdown-blog-mcp
-MCP_DISPLAY_NAME="Markdown Blog Publisher"
+MCP_SERVER_NAME=postbridge-mcp
+MCP_DISPLAY_NAME="Postbridge Publisher"
 MCP_PORT=8766
 MCP_TRUST_PROXY_HOPS=1
 MCP_OAUTH_APPROVAL_KEY=
 MCP_OAUTH_ISSUER=https://blog.example.com
 MCP_OAUTH_RESOURCE=https://blog.example.com/mcp
-MCP_OAUTH_STATE_FILE=/var/lib/markdown-blog/mcp-oauth-state.json
+MCP_OAUTH_STATE_FILE=/var/lib/postbridge/mcp-oauth-state.json
 MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS=3600
 MCP_OAUTH_REFRESH_TOKEN_TTL_SECONDS=2592000
 MCP_OAUTH_AUTHORIZATION_CODE_TTL_SECONDS=300
@@ -70,7 +70,7 @@ Run the compiled server with the shared environment loaded:
 
 ```bash
 set -a
-. /etc/markdown-blog/.env
+. /etc/postbridge/.env
 set +a
 
 node dist/server.js

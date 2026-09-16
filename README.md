@@ -1,4 +1,4 @@
-# Markdown Blog
+# Postbridge
 
 Markdown 문서를 SQLite에 저장하고 Flask로 렌더링하는 경량 블로그입니다.
 
@@ -39,22 +39,22 @@ state/                   런타임 상태 기본 경로
 모든 컴포넌트는 하나의 환경파일을 공유하도록 구성할 수 있습니다. 예제 파일을 복사한 뒤 배포 환경에 맞게 수정합니다.
 
 ```bash
-cp .env.example /etc/markdown-blog/.env
-chmod 600 /etc/markdown-blog/.env
+cp .env.example /etc/postbridge/.env
+chmod 600 /etc/postbridge/.env
 ```
 
 중요한 기본 설정은 다음과 같습니다.
 
 ```ini
-BLOG_SITE_NAME="Markdown Notes"
+BLOG_SITE_NAME="Postbridge"
 BLOG_SITE_URL=https://blog.example.com
 BLOG_TIMEZONE=UTC
 BLOG_LANGUAGE=en
 
-BLOG_ROOT=/opt/markdown-blog
-BLOG_DB=/var/lib/markdown-blog/blog.db
-BLOG_POSTS_DIR=/var/lib/markdown-blog/posts
-BLOG_STATE_DIR=/var/lib/markdown-blog/state
+BLOG_ROOT=/opt/postbridge
+BLOG_DB=/var/lib/postbridge/blog.db
+BLOG_POSTS_DIR=/var/lib/postbridge/posts
+BLOG_STATE_DIR=/var/lib/postbridge/state
 ```
 
 `BLOG_SITE_URL`은 게시 완료 URL, canonical URL, sitemap 및 robots 정보의 기준 주소로 사용됩니다. 실제 사이트 도메인을 소스 코드에 하드코딩할 필요가 없습니다.
@@ -124,7 +124,7 @@ Gunicorn 실행 예시:
 
 ```bash
 set -a
-. /etc/markdown-blog/.env
+. /etc/postbridge/.env
 set +a
 
 .venv/bin/gunicorn \
@@ -140,17 +140,17 @@ set +a
 웹, MCP, ntfy 서비스를 systemd로 실행할 경우 세 서비스가 동일한 환경 파일을 읽도록 구성할 수 있습니다.
 
 ```ini
-EnvironmentFile=/etc/markdown-blog/.env
+EnvironmentFile=/etc/postbridge/.env
 ```
 
 예를 들면 다음과 같이 역할을 분리할 수 있습니다.
 
 ```text
-markdown-blog.service
-markdown-blog-mcp.service
-markdown-blog-ntfy.service
+postbridge.service
+postbridge-mcp.service
+postbridge-ntfy.service
         │
-        └── /etc/markdown-blog/.env
+        └── /etc/postbridge/.env
 ```
 
 서비스 이름과 설치 위치는 배포 환경에 맞게 정하면 됩니다. 소스 코드에서 특정 systemd 서비스명을 요구하지 않습니다.
@@ -182,16 +182,16 @@ NTFY_TOKEN=
 
 ```ini
 NTFY_POLL_INTERVAL=5
-NTFY_STATE_FILE=/var/lib/markdown-blog/ntfy-last-id
+NTFY_STATE_FILE=/var/lib/postbridge/ntfy-last-id
 NTFY_MAX_ATTACHMENT_BYTES=5242880
-NTFY_USER_AGENT=markdown-blog-ntfy-publisher/2.0
-NTFY_SERVICE_NAME=markdown-blog-ntfy.service
+NTFY_USER_AGENT=postbridge-ntfy-publisher/2.0
+NTFY_SERVICE_NAME=postbridge-ntfy.service
 ```
 
 `bin/configure-ntfy-token`은 통합 `.env`의 다른 설정은 보존하면서 `NTFY_BASE_URL`, `NTFY_TOPIC`, `NTFY_TOKEN`만 갱신합니다.
 
 ```bash
-sudo bin/configure-ntfy-token /etc/markdown-blog/.env
+sudo bin/configure-ntfy-token /etc/postbridge/.env
 ```
 
 ## MCP publisher
@@ -203,8 +203,8 @@ MCP 공개 URL과 표시 이름 역시 설정값입니다.
 ```ini
 MCP_PUBLIC_URL=https://blog.example.com
 MCP_ALLOWED_HOSTS=blog.example.com
-MCP_SERVER_NAME=markdown-blog-mcp
-MCP_DISPLAY_NAME="Markdown Blog Publisher"
+MCP_SERVER_NAME=postbridge-mcp
+MCP_DISPLAY_NAME="Postbridge Publisher"
 MCP_OAUTH_APPROVAL_KEY=
 ```
 
