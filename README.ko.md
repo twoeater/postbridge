@@ -1,7 +1,5 @@
 # Postbridge
 
----
-
 <p align="center">
   <a href="README.md">English</a> &nbsp;|&nbsp; <strong>한국어</strong>
 </p>
