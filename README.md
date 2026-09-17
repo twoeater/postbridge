@@ -118,10 +118,19 @@ The CLI prints the resulting URL in the form `${BLOG_SITE_URL}/post/<slug>`.
 bin/blogctl list
 bin/blogctl publish --file FILE
 bin/blogctl publish --stdin [OPTIONS]
+bin/blogctl rebuild-html
 bin/blogctl delete SLUG
 ```
 
 Publishing again with the same `slug` updates the existing article's title, body, summary, and tags while preserving the original publication timestamp.
+
+Published HTML is sanitized with an allowlist before it is stored in SQLite. The original Markdown remains unchanged in `body_markdown` and in the Markdown source file. Inline raster images using `data:image/...;base64` are allowed only as `<img src>` values; active formats such as SVG and executable URL schemes such as `javascript:` are rejected.
+
+After upgrading an existing installation to a version that includes HTML sanitization, rebuild previously stored HTML once:
+
+```bash
+bin/blogctl rebuild-html
+```
 
 ## Web application
 
@@ -219,12 +228,19 @@ Behavior:
 - the last processed message ID is stored in `NTFY_STATE_FILE`
 - on first startup, the current time is used as the cursor to avoid republishing all cached messages
 - attachment URLs are restricted to HTTPS `/file/` URLs on the configured ntfy host
+- authenticated ntfy requests never follow HTTP redirects, preventing the Bearer token from being forwarded to a redirect target
+- malformed/permanently failing messages are written to a dead-letter JSONL file and the cursor advances so one poison message cannot block later posts
+- transient/unknown processing failures are retried up to `NTFY_MAX_EVENT_RETRIES` times before dead-lettering
 
 Related settings:
 
 ```ini
 NTFY_POLL_INTERVAL=5
+NTFY_MAX_EVENT_RETRIES=5
+NTFY_MAX_TITLE_CHARS=300
 NTFY_STATE_FILE=/var/lib/postbridge/ntfy-last-id
+NTFY_RETRY_STATE_FILE=/var/lib/postbridge/ntfy-retry.json
+NTFY_DEAD_LETTER_FILE=/var/lib/postbridge/ntfy-dead-letter.jsonl
 NTFY_MAX_ATTACHMENT_BYTES=5242880
 NTFY_USER_AGENT=postbridge-ntfy-publisher/2.0
 NTFY_SERVICE_NAME=postbridge-ntfy.service
@@ -264,6 +280,8 @@ echo "MCP_OAUTH_APPROVAL_KEY=$(openssl rand -hex 32)"
 
 This is **not** an OAuth access token. It is the secret used to approve an OAuth connection, and it must never be committed to Git. OAuth access and refresh tokens are issued by the OAuth flow itself.
 
+Dynamic OAuth client registrations are automatically pruned after `MCP_OAUTH_CLIENT_TTL_SECONDS` (30 days by default) when they have no live tokens. The store also enforces `MCP_OAUTH_MAX_CLIENTS` (1000 by default), evicting the oldest inactive clients first and rejecting new registrations if the limit is still fully occupied by active clients.
+
 The default endpoint is `${MCP_PUBLIC_URL}/mcp`, and the server exposes one MCP tool:
 
 ```text
@@ -292,6 +310,9 @@ runtime state BLOG_STATE_DIR
 - A real `.env` may contain an ntfy token and the MCP OAuth approval key. Never commit it to the repository.
 - Restrict the `.env` file so that only root or the service account can read it.
 - The public web application does not modify articles through HTTP requests.
+- Rendered Markdown HTML is allowlist-sanitized before storage.
+- Public responses include a Content Security Policy (CSP) that blocks inline executable scripts, limits resources to the same origin, and allows `data:` only for images. SEO JSON-LD uses a per-request nonce.
+- `X-Content-Type-Options: nosniff` and `Referrer-Policy: strict-origin-when-cross-origin` are also sent by the Flask application.
 - When exposing MCP to the internet, use a TLS reverse proxy together with Host validation, rate limits, and systemd sandboxing.
 
 ## Configuration example

@@ -19,6 +19,8 @@ export interface AppConfig {
   oauthAccessTokenTtlSeconds: number;
   oauthRefreshTokenTtlSeconds: number;
   oauthAuthorizationCodeTtlSeconds: number;
+  oauthClientTtlSeconds: number;
+  oauthMaxClients: number;
   maxRequestBody: string;
   blogRoot: string;
   blogCtl: string;
@@ -101,6 +103,12 @@ export function loadConfig(): AppConfig {
       60,
       900,
     ),
+    oauthClientTtlSeconds: intEnv(
+      "MCP_OAUTH_CLIENT_TTL_SECONDS",
+      30 * 24 * 3600,
+      3600,
+    ),
+    oauthMaxClients: intEnv("MCP_OAUTH_MAX_CLIENTS", 1000, 10, 100000),
     maxRequestBody: process.env.MCP_MAX_REQUEST_BODY?.trim() || "4mb",
     blogRoot,
     blogCtl: path.resolve(process.env.BLOGCTL_PATH?.trim() || path.join(blogRoot, "bin", "blogctl")),

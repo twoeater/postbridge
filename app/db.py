@@ -1,6 +1,7 @@
 from __future__ import annotations
 import importlib
 import os
+from contextlib import contextmanager
 from pathlib import Path
 
 _dbapi = importlib.import_module("sql" + "ite3")
@@ -8,7 +9,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = Path(os.environ.get("BLOG_DB", BASE_DIR / "data" / "blog.db"))
 
 
+@contextmanager
 def get_db(readonly: bool = True):
+    """Yield a SQLite connection and always close it when the block exits.
+
+    The nested SQLite connection context manager preserves its normal
+    commit-on-success / rollback-on-error transaction semantics.
+    """
     if readonly:
         conn = _dbapi.connect(f"file:{DB_PATH}?mode=ro", uri=True, timeout=5)
         conn.execute("PRAGMA query_only=ON")
@@ -17,7 +24,11 @@ def get_db(readonly: bool = True):
         conn.execute("PRAGMA journal_mode=DELETE")
         conn.execute("PRAGMA synchronous=NORMAL")
     conn.row_factory = _dbapi.Row
-    return conn
+    try:
+        with conn:
+            yield conn
+    finally:
+        conn.close()
 
 
 def init_db():

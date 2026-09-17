@@ -8,6 +8,7 @@ import {
   InvalidGrantError,
   InvalidScopeError,
   InvalidTargetError,
+  TooManyRequestsError,
   UnauthorizedClientError,
 } from "@modelcontextprotocol/sdk/server/auth/errors.js";
 import type {
@@ -183,7 +184,7 @@ function parseState(value: string): PersistedOAuthState {
   return parsed as PersistedOAuthState;
 }
 
-class PersistentOAuthStore implements OAuthRegisteredClientsStore {
+export class PersistentOAuthStore implements OAuthRegisteredClientsStore {
   private state = emptyState();
   private loadPromise: Promise<void> | undefined;
   private mutationQueue: Promise<void> = Promise.resolve();
@@ -192,6 +193,8 @@ class PersistentOAuthStore implements OAuthRegisteredClientsStore {
     private readonly stateFile: string,
     private readonly accessTokenTtlSeconds: number,
     private readonly refreshTokenTtlSeconds: number,
+    private readonly clientTtlSeconds: number,
+    private readonly maxClients: number,
   ) {}
 
   private async ensureLoaded(): Promise<void> {
@@ -213,6 +216,38 @@ class PersistentOAuthStore implements OAuthRegisteredClientsStore {
       if (token.expiresAt <= now) {
         delete this.state.tokens[hash];
       }
+    }
+
+    const activeClientIds = new Set(
+      Object.values(this.state.tokens)
+        .filter((token) => token.expiresAt > now)
+        .map((token) => token.clientId),
+    );
+    const clientCutoffSeconds = Math.floor(now / 1000) - this.clientTtlSeconds;
+    for (const [clientId, client] of Object.entries(this.state.clients)) {
+      const issuedAt = Number(client.client_id_issued_at || 0);
+      if (issuedAt > 0 && issuedAt < clientCutoffSeconds && !activeClientIds.has(clientId)) {
+        delete this.state.clients[clientId];
+      }
+    }
+  }
+
+  private pruneClientsToLimit(): void {
+    if (Object.keys(this.state.clients).length < this.maxClients) return;
+
+    const now = Date.now();
+    const activeClientIds = new Set(
+      Object.values(this.state.tokens)
+        .filter((token) => token.expiresAt > now)
+        .map((token) => token.clientId),
+    );
+    const removable = Object.entries(this.state.clients)
+      .filter(([clientId]) => !activeClientIds.has(clientId))
+      .sort(([, a], [, b]) => Number(a.client_id_issued_at || 0) - Number(b.client_id_issued_at || 0));
+
+    for (const [clientId] of removable) {
+      if (Object.keys(this.state.clients).length < this.maxClients) break;
+      delete this.state.clients[clientId];
     }
   }
 
@@ -282,6 +317,10 @@ class PersistentOAuthStore implements OAuthRegisteredClientsStore {
       throw new InvalidClientMetadataError(problem);
     }
     return this.mutate(() => {
+      this.pruneClientsToLimit();
+      if (Object.keys(this.state.clients).length >= this.maxClients) {
+        throw new TooManyRequestsError("OAuth client registration capacity reached");
+      }
       this.state.clients[registered.client_id] = registered;
       return registered;
     });
@@ -512,6 +551,8 @@ export class BlogOAuthProvider implements OAuthServerProvider {
       config.oauthStateFile,
       config.oauthAccessTokenTtlSeconds,
       config.oauthRefreshTokenTtlSeconds,
+      config.oauthClientTtlSeconds,
+      config.oauthMaxClients,
     );
   }
 

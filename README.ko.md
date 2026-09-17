@@ -118,10 +118,19 @@ printf '%s\n' '## Hello' | \
 bin/blogctl list
 bin/blogctl publish --file FILE
 bin/blogctl publish --stdin [OPTIONS]
+bin/blogctl rebuild-html
 bin/blogctl delete SLUG
 ```
 
 동일한 `slug`로 다시 게시하면 기존 글의 제목/본문/요약/태그를 갱신하고 최초 게시 시각은 유지합니다.
+
+게시 HTML은 SQLite에 저장하기 전에 allowlist 방식으로 sanitize합니다. 원본 Markdown은 `body_markdown`과 Markdown 원본 파일에 그대로 보존합니다. `data:image/...;base64` 형식의 인라인 래스터 이미지는 `<img src>`에서만 허용하며, SVG 같은 active format과 `javascript:` 같은 실행 가능한 URL scheme은 제거합니다.
+
+HTML sanitizer가 추가되기 전부터 사용하던 기존 설치는 업그레이드 후 한 번 기존 HTML을 다시 생성합니다.
+
+```bash
+bin/blogctl rebuild-html
+```
 
 ## 웹 애플리케이션
 
@@ -219,12 +228,19 @@ NTFY_TOKEN=
 - 마지막 처리 message ID를 `NTFY_STATE_FILE`에 저장
 - 최초 실행 시 기존 캐시 메시지를 모두 재게시하지 않도록 현재 시점을 cursor로 사용
 - 첨부 URL은 설정한 ntfy 호스트의 HTTPS `/file/` URL만 허용
+- 인증된 ntfy 요청은 HTTP redirect를 따라가지 않아 Bearer token이 redirect 대상 서버로 전달되는 것을 차단
+- 잘못됐거나 영구적으로 실패하는 메시지는 dead-letter JSONL 파일에 기록하고 cursor를 전진시켜 한 메시지가 뒤의 게시를 막지 않음
+- 일시적/알 수 없는 처리 오류는 `NTFY_MAX_EVENT_RETRIES` 횟수만큼 재시도한 뒤 dead-letter 처리
 
 관련 설정:
 
 ```ini
 NTFY_POLL_INTERVAL=5
+NTFY_MAX_EVENT_RETRIES=5
+NTFY_MAX_TITLE_CHARS=300
 NTFY_STATE_FILE=/var/lib/postbridge/ntfy-last-id
+NTFY_RETRY_STATE_FILE=/var/lib/postbridge/ntfy-retry.json
+NTFY_DEAD_LETTER_FILE=/var/lib/postbridge/ntfy-dead-letter.jsonl
 NTFY_MAX_ATTACHMENT_BYTES=5242880
 NTFY_USER_AGENT=postbridge-ntfy-publisher/2.0
 NTFY_SERVICE_NAME=postbridge-ntfy.service
@@ -264,6 +280,8 @@ echo "MCP_OAUTH_APPROVAL_KEY=$(openssl rand -hex 32)"
 
 이 값은 OAuth access token 자체가 아니라 **OAuth 연결을 승인할 때 사용하는 비밀키**이며 Git에 커밋하면 안 됩니다. 실제 access/refresh token은 OAuth 흐름에서 발급됩니다.
 
+동적 OAuth client 등록은 살아 있는 token이 없을 경우 `MCP_OAUTH_CLIENT_TTL_SECONDS`(기본 30일)가 지나면 자동 정리됩니다. 또한 `MCP_OAUTH_MAX_CLIENTS`(기본 1000개) 제한을 적용해 오래된 비활성 client부터 제거하며, 제한이 모두 활성 client로 차 있으면 새 등록을 거부합니다.
+
 기본 endpoint는 `${MCP_PUBLIC_URL}/mcp`이며 제공 도구는 `publish_blog` 하나입니다.
 
 ```text
@@ -292,6 +310,9 @@ runtime state BLOG_STATE_DIR
 - 실제 `.env`에는 ntfy token과 MCP OAuth approval key가 포함될 수 있으므로 저장소에 커밋하지 마세요.
 - `.env` 파일은 root 또는 서비스 사용자만 읽을 수 있도록 제한하는 것을 권장합니다.
 - 웹 앱은 공개 HTTP 요청을 통해 글을 수정하지 않습니다.
+- 렌더링된 Markdown HTML은 저장 전에 allowlist 방식으로 sanitize합니다.
+- 공개 응답에는 inline 실행 스크립트를 차단하고 리소스를 same-origin으로 제한하는 Content Security Policy(CSP)를 적용합니다. `data:`는 이미지에만 허용하며 SEO JSON-LD는 요청별 nonce를 사용합니다.
+- Flask 앱은 `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` 헤더도 전송합니다.
 - MCP를 인터넷에 노출할 경우 TLS reverse proxy, Host 검증, rate limit과 systemd sandboxing을 함께 사용하는 것을 권장합니다.
 
 ## 설정 예제

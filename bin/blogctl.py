@@ -9,12 +9,12 @@ from datetime import date, datetime, time, timezone
 from zoneinfo import ZoneInfo
 from pathlib import Path
 
-import markdown
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from app.content import render_markdown
 from app.db import get_db, init_db
 
 POSTS_DIR = Path(os.environ.get("BLOG_POSTS_DIR", ROOT / "posts"))
@@ -64,10 +64,6 @@ def parse_md(text: str) -> tuple[dict, str]:
         if len(parts) == 3:
             return yaml.safe_load(parts[1]) or {}, parts[2].lstrip("\n")
     return {}, text
-
-
-def render(body: str) -> str:
-    return markdown.markdown(body, extensions=["fenced_code", "tables", "sane_lists", "nl2br"])
 
 
 def publish(args) -> None:
@@ -123,7 +119,7 @@ def publish(args) -> None:
                 title,
                 summary,
                 body,
-                render(body),
+                render_markdown(body),
                 tags,
                 original_published,
                 updated,
@@ -161,6 +157,19 @@ def list_posts(_args) -> None:
         print(f"{row['published_at']}\t{row['slug']}\t{row['title']}")
 
 
+def rebuild_html(_args) -> None:
+    """Re-render and sanitize HTML for all existing posts."""
+    init_db()
+    with get_db(False) as db:
+        rows = db.execute("SELECT id, body_markdown FROM posts").fetchall()
+        for row in rows:
+            db.execute(
+                "UPDATE posts SET body_html = ? WHERE id = ?",
+                (render_markdown(row["body_markdown"]), row["id"]),
+            )
+    print(f"rebuilt html: {len(rows)} post(s)")
+
+
 def delete(args) -> None:
     init_db()
     with get_db(False) as db:
@@ -186,6 +195,7 @@ def main() -> None:
     pub.add_argument("--date")
 
     sub.add_parser("list")
+    sub.add_parser("rebuild-html")
     remove = sub.add_parser("delete")
     remove.add_argument("slug")
 
@@ -197,6 +207,8 @@ def main() -> None:
         publish(args)
     elif args.cmd == "list":
         list_posts(args)
+    elif args.cmd == "rebuild-html":
+        rebuild_html(args)
     elif args.cmd == "delete":
         delete(args)
 

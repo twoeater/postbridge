@@ -35,6 +35,8 @@ MCP_OAUTH_STATE_FILE=/var/lib/postbridge/mcp-oauth-state.json
 MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS=3600
 MCP_OAUTH_REFRESH_TOKEN_TTL_SECONDS=2592000
 MCP_OAUTH_AUTHORIZATION_CODE_TTL_SECONDS=300
+MCP_OAUTH_CLIENT_TTL_SECONDS=2592000
+MCP_OAUTH_MAX_CLIENTS=1000
 MCP_MAX_REQUEST_BODY=4mb
 ```
 
@@ -132,6 +134,8 @@ echo "MCP_OAUTH_APPROVAL_KEY=$(openssl rand -hex 32)"
 
 This value is the **server-side approval key used on the OAuth authorization page**, not an OAuth access token. Access and refresh tokens are issued by the OAuth flow itself.
 
+Dynamic client registrations are bounded by `MCP_OAUTH_CLIENT_TTL_SECONDS` (default 30 days) and `MCP_OAUTH_MAX_CLIENTS` (default 1000). Expired inactive clients are pruned automatically; when the cap is reached, the oldest inactive clients are evicted first. Clients with live access/refresh tokens are preserved.
+
 The implementation includes:
 
 - authorization code + PKCE (`S256`)
@@ -139,7 +143,7 @@ The implementation includes:
 - RFC 9207 `iss` in authorization responses
 - short-lived access tokens
 - rotating refresh tokens with replay invalidation
-- configurable access/refresh/code TTLs
+- configurable access/refresh/code/client TTLs and a bounded dynamic-client store
 - hashed persisted OAuth token state
 - Host header validation
 - protected-resource and authorization-server metadata endpoints

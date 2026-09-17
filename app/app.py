@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import math
 import os
+import secrets
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
-from flask import Flask, abort, make_response, render_template, request
+from flask import Flask, abort, g, make_response, render_template, request
 
 from .db import get_db
 
@@ -25,6 +26,37 @@ app.config.update(
 )
 
 LOCAL_TZ = ZoneInfo(os.environ.get("BLOG_TIMEZONE", "UTC"))
+
+
+@app.before_request
+def prepare_security_context():
+    # A fresh nonce lets the JSON-LD block remain inline without enabling
+    # unsafe-inline for executable JavaScript.
+    g.csp_nonce = secrets.token_urlsafe(24)
+
+
+@app.after_request
+def add_security_headers(response):
+    nonce = getattr(g, "csp_nonce", "")
+    response.headers["Content-Security-Policy"] = "; ".join(
+        [
+            "default-src 'self'",
+            "base-uri 'self'",
+            "object-src 'none'",
+            "frame-ancestors 'none'",
+            "form-action 'self'",
+            f"script-src 'self' 'nonce-{nonce}'",
+            "style-src 'self'",
+            "img-src 'self' data:",
+            "font-src 'self'",
+            "connect-src 'self'",
+            "media-src 'self'",
+            "manifest-src 'self'",
+        ]
+    )
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
 
 def parse_tags(value: str):
@@ -235,4 +267,5 @@ def common():
         "site_host": urlparse(app.config["SITE_URL"]).netloc or app.config["SITE_URL"],
         "site_language": app.config["SITE_LANGUAGE"],
         "current_year": datetime.now(LOCAL_TZ).year,
+        "csp_nonce": getattr(g, "csp_nonce", ""),
     }
